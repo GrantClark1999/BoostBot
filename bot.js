@@ -28,6 +28,14 @@ client.on("message", async message => {
         return message.channel.send(`You didn't provide any boost details, ${message.author}!`);
     }
 
+    let guild_emojis = message.client.emojis.cache;
+    let emojis = {
+        'tank': guild_emojis.get(config.emojis.tank),
+        'heal': guild_emojis.get(config.emojis.heal),
+        'dps': guild_emojis.get(config.emojis.dps),
+        'key': guild_emojis.get(config.emojis.key)
+    }
+
     // Random string generator (would like to update to alphanumerical with caps)
     let r = Math.random().toString(36).substring(3, 10) + Math.random().toString(36).substring(3, 10);
     var POT = (args[0]);
@@ -56,7 +64,6 @@ client.on("message", async message => {
         await bot_message.react(emoji);
     }
 
-
     let key_holder = null;
         
     let queue = {
@@ -66,18 +73,19 @@ client.on("message", async message => {
     }
 
     const filter = (reaction, user) => {
+        console.debug(reaction);
         if (user.bot)
             return false
         if (reaction.emoji.name === config.emojis.close) {
             return user.id === host;
         }
-        return reactions.includes(reaction.emoji.name);
+        return reactions.includes(reaction.emoji.id);
     }
 
     const collector = bot_message.createReactionCollector(filter, { dispose: true });
         
     collector.on('collect', (reaction, user) => {
-        switch (reaction.emoji.name) {
+        switch (reaction.emoji.id) {
             case reactions[0]:      // tank
                 queue.tank.push(user);
                 break;
@@ -97,7 +105,6 @@ client.on("message", async message => {
                     }
                 } else {
                     reaction.users.remove(user.id);
-                    return false;
                 }
                 break;
         }
@@ -110,7 +117,7 @@ client.on("message", async message => {
     });
 
     collector.on('remove', (reaction, user) => {
-        switch (reaction.emoji.name) {
+        switch (reaction.emoji.id) {
             case config.emojis.tank:      // tank
                 queue.tank.splice(queue.tank.indexOf(user), 1);
                 break;
@@ -143,20 +150,21 @@ client.on("message", async message => {
     }
 
     function conditionalKeyEmoji(user) {
-        return (key_holder === user) ? `${config.emojis.key}` : '';
+        return (key_holder === user) ? `${emojis.key}` : '';
     }
 
     function formatPlayers() {
         let formatted_string = '';
         let players = getPlayers();
+
         if (players[0])
-            formatted_string += `${config.emojis.tank}${conditionalKeyEmoji(players[0])} ${players[0]}`;
+            formatted_string += `${emojis.tank}${conditionalKeyEmoji(players[0])} ${players[0]}`;
         if (players[1])
-            formatted_string += `${config.emojis.heal}${conditionalKeyEmoji(players[1])} ${players[1]}`;
+            formatted_string += `${emojis.heal}${conditionalKeyEmoji(players[1])} ${players[1]}`;
         if (players[2])
-            formatted_string += `${config.emojis.dps}${conditionalKeyEmoji(players[2])} ${players[2]}`;
+            formatted_string += `${emojis.dps}${conditionalKeyEmoji(players[2])} ${players[2]}`;
         if (players[3])
-            formatted_string += `${config.emojis.dps}${conditionalKeyEmoji(players[3])} ${players[3]}`;
+            formatted_string += `${emojis.dps}${conditionalKeyEmoji(players[3])} ${players[3]}`;
         if (formatted_string === '')
             formatted_string = 'Apply For Roles';
         return formatted_string;
